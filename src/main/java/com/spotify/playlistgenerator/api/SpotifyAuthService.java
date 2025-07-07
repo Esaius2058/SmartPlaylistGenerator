@@ -18,15 +18,17 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 public class SpotifyAuthService {
     private static final Logger logger = LogManager.getLogger(SpotifyAuthService.class);
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(System.getProperty("spotify.client.id"))
-            .setClientSecret("spotify.client.secret")
+            .setClientSecret(System.getProperty("spotify.client.secret"))
             .setRedirectUri(SpotifyHttpManager.makeUri("http://127.0.0.1:8888/callback"))
             .build();
     private String authCode;
+    private static final long TIMEOUT_SECONDS = 60;
 
     public void authenticate(){
         try{
@@ -46,10 +48,17 @@ public class SpotifyAuthService {
             URI uri = authRequest.execute();
             logger.info("Open this URL in your browser: {}", uri);
 
-            // Wait for callback (simplified; use a proper wait mechanism in production)
-            while(authCode == null) {
+            // Wait for callback with timeout
+            long startTime = System.currentTimeMillis();
+            while(authCode == null && (System.currentTimeMillis() - startTime) < TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS)) {
                 Thread.sleep(1000);
             }
+
+            if (authCode == null) {
+                logger.error("Authentication timed out after {} seconds. No authorization code received.", TIMEOUT_SECONDS);
+                throw new RuntimeException("Authentication timed out");
+            }
+
             server.stop();
             logger.info("Stopped HTTP server");
 
