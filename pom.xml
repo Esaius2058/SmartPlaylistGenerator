@@ -34,6 +34,12 @@
       <groupId>se.michaelthelin.spotify</groupId>
       <artifactId>spotify-web-api-java</artifactId>
       <version>8.5.0</version> <!-- Latest version as of July 2025; check for updates -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- Apache Commons Math for k-means clustering -->
     <dependency>
@@ -41,10 +47,22 @@
       <artifactId>commons-math3</artifactId>
       <version>3.6.1</version>
     </dependency>
-    <!-- Log4j for logging -->
+    <!-- Log4j 2 + SLF4J bridge for logging -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
+      <version>2.20.0</version> <!-- Match this to your log4j-core version -->
+    </dependency>
+    <!-- Log4j core -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
+      <version>2.20.0</version>
+    </dependency>
+    <!-- Log4j API -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
       <version>2.20.0</version>
     </dependency>
     <!-- JUnit 5 for testing -->
