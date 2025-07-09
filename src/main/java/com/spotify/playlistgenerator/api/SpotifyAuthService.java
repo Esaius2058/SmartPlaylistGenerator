@@ -1,6 +1,5 @@
 package com.spotify.playlistgenerator.api;
 
-import org.apache.logging.log4j.LogBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -9,7 +8,6 @@ import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCrede
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 
-import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,8 +41,13 @@ public class SpotifyAuthService {
 
             //Get authorization URL
             AuthorizationCodeUriRequest authRequest = spotifyApi
-                    .authorizationCodeUri().scope("playlist-read-private playlist-modify-private playlist-modify-public")
-                    .build();
+                    .authorizationCodeUri()
+                    .scope( "playlist-read-private " +
+                            "playlist-modify-private " +
+                            "playlist-modify-public " +
+                            "user-read-recently-played " +
+                            "user-read-private"
+                    ).build();
             URI uri = authRequest.execute();
             logger.info("Open this URL in your browser: {}", uri);
 
