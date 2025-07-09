@@ -7,6 +7,7 @@ import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.data.player.GetCurrentUsersRecentlyPlayedTracksRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
+import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistsItemsRequest;
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForSeveralTracksRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,12 +22,12 @@ public class SpotifyPlaylistService{
     private static final Logger logger = LogManager.getLogger(SpotifyPlaylistService.class);
     private  SpotifyApi spotifyApi = new SpotifyApi.Builder().build();
 
-    SpotifyPlaylistService(SpotifyApi spotifyApi) {
+    public SpotifyPlaylistService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
         logger.info("Initialized SpotifyPlaylistService");
     }
 
-    private List<Playlist> getUserPlaylists(){
+    public List<Playlist> getUserPlaylists(){
         try{
             List<Playlist> playlists = new ArrayList<>();
             int offset = 0;
@@ -59,7 +60,7 @@ public class SpotifyPlaylistService{
                 offset += limit;
             }
 
-            logger.info("Fetched {} playlists for user", playlists.size());
+            logger.info("Fetched {} playlists for user.", playlists.size());
             return playlists;
         }catch(Exception e){
             logger.error("Failed to fetch playlists: {}", e.getMessage());
@@ -67,7 +68,55 @@ public class SpotifyPlaylistService{
         }
     }
 
-    private List<Track> getPlaylistTracks(String playlistId) {
+    public List<Track> getPlaylistTracks(String playlistId) {
+        try {
+            List<Track> tracks = new ArrayList<>();
+            Instant after = null;
+            int offset = 0;
+            int limit = 100;
+
+            while (true) {
+                GetPlaylistsItemsRequest requestBuilder = spotifyApi
+                        .getPlaylistsItems(playlistId)
+                        .limit(limit)
+                        .offset(offset)
+                        .build();
+
+                Paging<PlaylistTrack> response = requestBuilder.execute();
+
+                List<PlaylistTrack> trackItems = Arrays.asList(response.getItems());
+
+                if (trackItems.isEmpty()) {
+                    break;
+                }
+
+                for (PlaylistTrack trackItem : trackItems) {
+                    Track track = new Track(
+                            trackItem.getTrack().getId(),
+                            trackItem.getTrack().getName(),
+                            trackItem.getAddedBy().getDisplayName()
+                    );
+                    tracks.add(track);
+                }
+
+                logger.info("Fetched {} tracks for playlist {}", response.getItems().length, playlistId);
+                if (response.getNext() == null) {
+                    break;
+                }
+                offset += limit;
+                // Optional: sleep 200ms to avoid hammering the API
+                Thread.sleep(200);
+            }
+
+            logger.info("Fetched {} tracks from playlist {}", tracks.size(), playlistId);
+            return tracks;
+        } catch (Exception e) {
+            logger.error("Failed to fetch tracks for playlist {}: {}", playlistId, e.getMessage());
+            throw new RuntimeException("Track fetch failed", e);
+        }
+    }
+
+    private List<Track> getRecentlyPlayedTracks(String playlistId) {
         try {
             List<Track> tracks = new ArrayList<>();
             Instant after = null;
@@ -116,12 +165,12 @@ public class SpotifyPlaylistService{
             logger.info("Fetched {} recently played tracks", tracks.size());
             return tracks;
         } catch (Exception e) {
-            logger.error("Failed to fetch tracks for playlist {}: {}", playlistId, e.getMessage());
+            logger.error("Failed to fetch recently played tracks: {}", e.getMessage());
             throw new RuntimeException("Track fetch failed", e);
         }
     }
 
-    private List<AudioFeaturesCustom> getAudioFeatures(List<String> trackIds){
+    public List<AudioFeaturesCustom> getAudioFeatures(List<String> trackIds){
        try{
            List<AudioFeaturesCustom> audioFeatures = new ArrayList<>();
 
