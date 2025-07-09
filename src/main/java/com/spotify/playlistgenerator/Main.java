@@ -23,7 +23,6 @@ public class Main {
         return trackIds;
     }
 
-
     static void startPlaylistGeneratorWithAuthentication(){
       try{
           SpotifyAuthService authService = new SpotifyAuthService();
